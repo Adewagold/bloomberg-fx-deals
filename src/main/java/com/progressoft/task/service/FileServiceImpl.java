@@ -4,6 +4,7 @@ import com.progressoft.task.config.StorageProperties;
 import com.progressoft.task.exception.FileException;
 import com.progressoft.task.exception.FileNotFoundException;
 import com.progressoft.task.exception.InvalidDateException;
+import com.progressoft.task.exception.MissingFieldsException;
 import com.progressoft.task.model.Deal;
 import com.progressoft.task.repository.DealRepository;
 import org.slf4j.Logger;
@@ -34,13 +35,13 @@ import java.util.stream.Stream;
 @Service
 public class FileServiceImpl implements FileService{
     private final Path rootLocation;
-    private final DealRepository dealRepository;
+    private final DealService dealService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileService.class);
     @Autowired
-    public FileServiceImpl(StorageProperties properties, DealRepository dealRepository) {
+    public FileServiceImpl(StorageProperties properties, DealService dealRepository) {
         this.rootLocation = Paths.get(properties.getLocation());
-        this.dealRepository = dealRepository;
+        this.dealService = dealRepository;
     }
 
     @Override
@@ -65,10 +66,16 @@ public class FileServiceImpl implements FileService{
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                 int row = 1;
                 String line;
+                int columnLength = 0;
                 while((line = bufferedReader.readLine()) != null){
                     lines.add(line);
-                    if(row>1) {
-                        persistToDB(line);
+                    columnLength = line.split(",").length;
+                    if(row==1){
+                        LOGGER.info("Deals header - {}", line);
+
+                    }else {
+                        validateColumnLength(columnLength, line.split(",").length);
+                        dealService.persistToDB(line);
                         LOGGER.info(line + " - Saved to DB");
                     }
                     row++;
@@ -87,26 +94,9 @@ public class FileServiceImpl implements FileService{
         return file.getOriginalFilename();
     }
 
-    private void persistToDB(String dealRows){
-        String[] deals = dealRows.split(",");
-        Deal deal = new Deal();
-        deal.setId(Long.valueOf(deals[0].trim()));
-        deal.setFromCurrencyIsoCode(deals[1].trim());
-        deal.setToCurrencyIsoCode(deals[2].trim());
-        deal.setTimestamp(formatDate(deals[3].trim()));
-        deal.setAmount(new BigDecimal(deals[4].trim()));
-        dealRepository.save(deal);
-    }
-
-
-    private Date formatDate(String dateString){
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("mm/DD/yyyy hh:mm:ss");
-        try {
-            Date date = simpleDateFormat.parse(dateString);
-            return date;
-        } catch (ParseException e) {
-            LOGGER.error(e.getMessage());
-            throw new InvalidDateException("Invalid date", e);
+    private void validateColumnLength(Integer expected, Integer length){
+        if(!length.equals(expected)){
+            throw new MissingFieldsException("Invalid row");
         }
     }
 }

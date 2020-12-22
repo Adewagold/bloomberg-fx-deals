@@ -1,12 +1,15 @@
 package com.progressoft.task.exception;
 
-public class MissingFieldsException extends BaseException {
+public class MissingFieldsException extends RuntimeException {
     private final String code = "11";
-    public MissingFieldsException(String code, String message) {
+    public MissingFieldsException(String code, Throwable message) {
         super(code, message);
     }
 
-    @Override
+    public MissingFieldsException(String message) {
+        super(message);
+    }
+
     public String getCode() {
         return code;
     }
