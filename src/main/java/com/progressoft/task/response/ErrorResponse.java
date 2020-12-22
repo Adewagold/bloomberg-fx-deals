@@ -1,4 +1,4 @@
-package com.progressoft.task.model;
+package com.progressoft.task.response;
 
 public class ErrorResponse extends BaseResponse{
         public ErrorResponse(String code, String message) {
