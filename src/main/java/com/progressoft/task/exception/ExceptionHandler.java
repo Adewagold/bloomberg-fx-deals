@@ -15,13 +15,19 @@ public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(FileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    ErrorResponse invalidCredentialsException(FileException ex){
+    ErrorResponse fileException(FileException ex){
+        return new ErrorResponse(ex.getCode(), ex.getMessage());
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(InvalidFileException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ErrorResponse invalidFilesException(InvalidFileException ex){
         return new ErrorResponse(ex.getCode(), ex.getMessage());
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(FileNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    ErrorResponse invalidCredentialsException(FileNotFoundException ex){
+    ErrorResponse fileNotFoundException(FileNotFoundException ex){
         return new ErrorResponse(ex.getCode(), ex.getMessage());
     }
 
